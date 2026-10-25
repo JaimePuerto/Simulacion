@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yahtzee - Método de Montecarlo | Grupo 1</title>
+<style>
+:root{
+  --bg:#f5f7fb; --panel:#fff; --ink:#182033; --muted:#65708a;
+  --primary:#263f8f; --primary2:#3f61c9; --line:#dfe4ef;
+  --good:#16845b; --warn:#b26b00; --danger:#b42318;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.45}
+header{background:linear-gradient(135deg,#263f8f,#1d285f);color:white;padding:34px 5% 28px}
+header h1{margin:0 0 8px;font-size:34px}
+header p{margin:0;color:#dbe5ff;font-size:17px}
+.meta{margin-top:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:18px;border-radius:12px}
+.meta b{display:block;color:#fff}.meta span{color:#dbe5ff}
+main{max-width:1250px;margin:26px auto;padding:0 18px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 10px rgba(20,30,60,.05)}
+h2{margin:0 0 14px;color:var(--primary);font-size:23px}
+h3{color:var(--primary);margin-top:22px}
+.note{background:#eef3ff;border-left:4px solid var(--primary);padding:12px 14px;border-radius:7px}
+#conclusionTrabajo{line-height:1.65;text-align:justify;padding:18px 24px}
+#conclusionTrabajo strong{font-weight:700;color:#111827}
+#conclusionTrabajo p{margin:0 0 16px 0}
+#conclusionTrabajo p:last-child{margin-bottom:0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}
+.flow div{background:#eef3ff;border:1px solid #cbd7ff;padding:9px 12px;border-radius:8px;font-weight:bold}
+.arrow{color:var(--primary);font-weight:bold}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:9px;text-align:left;vertical-align:top}
+th{background:#f0f3fa;color:var(--primary)}
+.code{background:#0f172a;color:#e5e7eb;border-radius:10px;padding:0;overflow:auto;font:13px/1.55 Consolas,Monaco,monospace;white-space:pre}
+.code pre{margin:0;padding:18px;min-width:max-content}
+.code .kw{color:#c084fc;font-weight:700}.code .fn{color:#67e8f9}.code .str{color:#86efac}.code .num{color:#fbbf24}.code .com{color:#94a3b8;font-style:italic}.code .var{color:#f9a8d4}
+.code-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.code-tab{border:1px solid var(--line);background:#eef3ff;color:var(--primary);padding:7px 11px;border-radius:7px;cursor:pointer;font-weight:700}.code-tab.active{background:var(--primary);color:white}
+.test-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:15px}.test-card{border:1px solid var(--line);border-radius:10px;padding:15px;background:#fbfcff}.test-card h3{margin-top:0}.test-pass{color:var(--good);font-weight:700}.test-fail{color:var(--danger);font-weight:700}
+.round-block{border:1px solid var(--line);border-left:5px solid var(--primary2);border-radius:9px;margin:0 0 12px;background:#fff;overflow:hidden}.round-title{background:#eef3ff;padding:9px 12px;font-weight:800;color:var(--primary)}.round-body{padding:11px 12px}.turn-line{padding:7px 0;border-bottom:1px dashed #d7ddea}.turn-line:last-child{border-bottom:0}.turn-player{font-weight:800}.dice-inline{font-family:Consolas,monospace;background:#f1f5f9;border-radius:6px;padding:2px 6px}
+.round-block:nth-child(even){border-left-color:#d88918}
+.round-title{font-size:14px}
+.turn-line{background:#ffffff;margin:8px 0;padding:10px 12px;border:1px solid #e4e9f1;border-radius:8px}
+.turn-player{color:#263f8f;font-size:14px;margin-bottom:5px}
+.turn-line strong{color:#334155}
+.dice-inline{color:#111827;background:#eef2f7;border:1px solid #d8dee8}
+
+.graph-explain{margin:10px 0 0;padding:10px 12px;background:#f8fafc;border-left:4px solid var(--primary2);border-radius:7px;font-size:13px;color:#46516a}
+.graph-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:7px;font-size:12px;color:#46516a}.legend-item{display:inline-flex;align-items:center;gap:5px}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.graphs{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.graph{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}.graph h3{margin:0 0 5px;font-size:16px}
+@media(max-width:850px){.meta,.test-grid,.graphs{grid-template-columns:1fr}}
+.code-title{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+button,select{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;background:var(--primary);color:#fff}
+button.secondary{background:#e8edf9;color:var(--primary)}
+button.success{background:var(--good)}
+button.warn{background:#d88918}
+button:disabled{opacity:.5;cursor:not-allowed}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.status{padding:12px;background:#f4f6fa;border:1px solid var(--line);border-radius:8px;margin:14px 0}
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.player{border:1px solid var(--line);border-radius:10px;padding:15px}
+.player h3{margin:0 0 10px}
+.dice{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.die{width:55px;height:55px;border:2px solid #cbd3e2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:bold;background:white}
+.log{max-height:520px;overflow:auto;background:#f8fafc;color:#1f2937;border:1px solid #cfd8e6;border-radius:10px;padding:12px;font:13px/1.55 Consolas,monospace;box-shadow:inset 0 1px 3px rgba(20,30,60,.06)}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef3ff;color:var(--primary);font-size:12px;font-weight:bold}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:15px;background:#fbfcfe}
+.kpi .v{font-size:24px;font-weight:bold;color:var(--primary)}
+.graphs{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.graph{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;min-height:330px}
+.graph h3{margin:4px 0 8px;font-size:16px}
+.graph svg{width:100%;height:270px;display:block}
+.small{font-size:13px;color:var(--muted)}
+.analysis-box{background:#eef5ff;border-left:5px solid #3f61c9;border-radius:8px;padding:14px 16px;margin:10px 0;color:#25324a}
+.analysis-box strong{color:#263f8f}
+.observations{display:grid;gap:8px;background:#fffaf0;border-left:5px solid #d88918;border-radius:8px;padding:14px 16px;color:#3d3423}
+.observations div{padding:7px 0;border-bottom:1px solid #f1dfb7}
+.observations div:last-child{border-bottom:0}
+
+.ok{color:var(--good);font-weight:bold}.bad{color:var(--danger);font-weight:bold}
+footer{text-align:center;color:var(--muted);padding:25px}
+@media(max-width:900px){.meta,.live-grid,.graphs,.kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.meta,.live-grid,.graphs,.kpis{grid-template-columns:1fr}header h1{font-size:27px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎲 Simulación del Yahtzee por Método de Montecarlo</h1>
+  <p>Laboratorio educativo: algoritmo, código, ejecución paso a paso y análisis estadístico.</p>
+  <div class="meta">
+    <div><b>Estudiantes</b><span>Estefanya Romero Suárez<br>Jaime Puerto Ortiz<br>Manuel Ramiro Pemberthy Gil</span></div>
+    <div><b>Asignatura</b><span>PREICA2602B020045 – Simulación</span></div>
+    <div><b>Grupo / Docente</b><span>Grupo 1<br>Julián Andrés Loaiza</span></div>
+    <div><b>Fecha / Modelo</b><span>Octubre de 2026<br>Dos jugadores automáticos</span></div>
+  </div>
+</header>
+
+<main>
+<section>
+<h2>1. Objetivo</h2>
+<p>Comprender y aplicar el método de Montecarlo en una aplicación que permita su ejecución y explotación de los resultados aleatorios obtenidos.</p>
+<div class="note"><b>Idea central:</b> una partida de Yahtzee contiene decisiones y resultados aleatorios. Al repetir muchas partidas podemos estudiar victorias, puntuaciones, combinaciones y estabilidad de las estimaciones.</div>
+</section>
+
+<section>
+<h2>2. ¿Cómo se relaciona Montecarlo con el programa?</h2>
+<div class="flow">
+<div>Dados aleatorios</div><span class="arrow">→</span>
+<div>13 rondas</div><span class="arrow">→</span>
+<div>Resultado de una partida</div><span class="arrow">→</span>
+<div>Repetir 1.000 / 10.000 veces</div><span class="arrow">→</span>
+<div>Estadísticas</div>
+</div>
+<p>El método no consiste solamente en generar números aleatorios. La misma partida completa se repite muchas veces y los resultados se almacenan para analizarlos.</p>
+</section>
+
+<section>
+<h2>3. Algoritmo de la actividad</h2>
+<div class="code">Algoritmo Simular_Partida
+
+Crear jugador 1 y jugador 2
+Crear tarjetas vacías
+
+Para ronda = 1 Hasta 13
+    Para cada jugador
+        dados ← Lanzar_Cinco_Dados()
+        lanzamientos_restantes ← 2
+
+        Mientras lanzamientos_restantes > 0
+            Aplicar_Estrategia_Conservar(dados)
+            Volver_A_Lanzar_No_Conservados(dados)
+            lanzamientos_restantes ← lanzamientos_restantes - 1
+        FinMientras
+
+        Evaluar_Combinacion(dados)
+        Aplicar_Reglas_Puntuacion_Y_Joker(jugador, dados)
+        Registrar_Puntos_En_Categoria_Disponible(jugador)
+    FinPara
+FinPara
+
+Calcular_Bonificaciones_Y_Puntuacion_Final(jugador1)
+Calcular_Bonificaciones_Y_Puntuacion_Final(jugador2)
+Comparar_Puntuaciones(jugador1, jugador2)
+Devolver_Resultado_Y_Estadisticas
+
+FinAlgoritmo</div>
+</section>
+
+<section>
+<h2>4. Algoritmo → código</h2>
+<table>
+<tr><th>Pasó del algoritmo</th><th>Función que lo implementa</th><th>Qué hace</th></tr>
+<tr><td>Crear jugadores</td><td><code>crearJugador()</code></td><td>Crea la estructura del jugador y su tarjeta vacía.</td></tr>
+<tr><td>Lanzar cinco dados</td><td><code>lanzarCincoDados()</code></td><td>Genera 5 valores entre 1 y 6.</td></tr>
+<tr><td>Aplicar estrategia</td><td><code>aplicarEstrategiaConservar()</code></td><td>Determina qué dados conservar.</td></tr>
+<tr><td>Relanzar no conservados</td><td><code>relanzarNoConservados()</code></td><td>Genera nuevos valores únicamente para los dados no conservados.</td></tr>
+<tr><td>Evaluar combinación</td><td><code>identificarCombinaciones()</code></td><td>Detecta tríos, cuartetos, full, escaleras y Yahtzee.</td></tr>
+<tr><td>Aplicar puntuación</td><td><code>puntuarCategoria()</code></td><td>Calcula los puntos de una categoría.</td></tr>
+<tr><td>Joker</td><td><code>aplicarJoker()</code></td><td>Aplica la regla de Yahtzee adicional.</td></tr>
+<tr><td>Registrar categoría</td><td><code>seleccionarCategoria()</code></td><td>Escoge la categoría disponible con mayor puntuación inmediata.</td></tr>
+<tr><td>Bonificaciones</td><td><code>calcularPuntuacionFinal()</code></td><td>Calcula el bono superior y el total.</td></tr>
+<tr><td>Simular partida</td><td><code>simularPartida()</code></td><td>Ejecuta las 13 rondas para ambos jugadores.</td></tr>
+<tr><td>Montecarlo</td><td><code>ejecutarMontecarlo()</code></td><td>Repite partidas y acumula resultados.</td></tr>
+</table>
+<p class="small">Esta correspondencia se basa en la estructura del notebook suministrado para la actividad.</p>
+</section>
+
+<section>
+<h2>5. Código ejecutable</h2>
+<p>El código está organizado por bloques para facilitar su lectura. Cada bloque corresponde a una fase del algoritmo del trabajo: <strong>dados → combinaciones → jugador y puntuación → turno → partida → Montecarlo</strong>.</p>
+<div class="note"><strong>Importante:</strong> este es el código que ejecuta la simulación del HTML. Los comentarios permiten identificar qué parte del algoritmo se está implementando.</div>
+<div class="code-tabs">
+  <button class="code-tab active" onclick="mostrarBloqueCodigo(0,this)">1. Dados y combinaciones</button>
+  <button class="code-tab" onclick="mostrarBloqueCodigo(1,this)">2. Jugador y puntuación</button>
+  <button class="code-tab" onclick="mostrarBloqueCodigo(2,this)">3. Turno y partida</button>
+  <button class="code-tab" onclick="mostrarBloqueCodigo(3,this)">4. Montecarlo</button>
+</div>
+<div class="code" id="codigoVisible"><pre></pre></div>
+<p class="small">Colores: <span style="color:#7c3aed;font-weight:bold">palabras reservadas</span>, <span style="color:#0891b2;font-weight:bold">funciones</span>, <span style="color:#15803d;font-weight:bold">textos</span>, <span style="color:#b45309;font-weight:bold">números</span> y <span style="color:#64748b;font-weight:bold">comentarios</span>.</p>
+</section>
+
+<section>
+<h2>6. Ejecución de una partida en vivo</h2>
+<div class="controls">
+<button onclick="nuevaPartida()">Nueva partida</button>
+<button onclick="pasoPartida()">Ejecutar siguiente paso</button>
+<button class="success" onclick="partidaCompleta()">▶ Ejecutar partida completa</button>
+</div>
+<div id="estado" class="status">Presiona “Nueva partida” para comenzar.</div>
+<div class="live-grid">
+  <div class="player"><h3>Jugador 1</h3><div id="j1Actual">Sin turno</div><div id="j1Tabla"></div></div>
+  <div class="player"><h3>Jugador 2</h3><div id="j2Actual">Sin turno</div><div id="j2Tabla"></div></div>
+</div>
+<h3>Bitácora de la ejecución</h3>
+<p class="small">Cada ronda aparece separada para que se pueda seguir fácilmente qué ocurrió con cada jugador. Dentro de cada ronda se muestran sus lanzamientos, estrategia, combinación y puntuación.</p>
+<div id="bitacora" class="log">Aquí aparecerán las tiradas, decisiones, combinaciones y puntuaciones.</div>
+</section>
+
+<section>
+<h2>7. Resultado final de la partida</h2>
+<div id="resultadoFinal" class="note">La partida todavía no ha terminado.</div>
+<div class="live-grid">
+  <div class="player"><h3>Tarjeta Jugador 1</h3><div id="tarjeta1"></div></div>
+  <div class="player"><h3>Tarjeta Jugador 2</h3><div id="tarjeta2"></div></div>
+</div>
+</section>
+
+<section>
+<h2>8. Simulación Montecarlo</h2>
+<div class="controls">
+<label>Partidas:
+<select id="cantidadMC">
+<option value="1000">1.000</option>
+<option value="10000">10.000</option>
+</select></label>
+<button class="success" onclick="ejecutarMontecarloUI()">Ejecutar Montecarlo</button>
+<button class="secondary" onclick="compararMC()">Comparar 1.000 vs 10.000</button>
+</div>
+<div id="mcEstado" class="status">Todavía no se ha ejecutado Montecarlo.</div>
+<div id="kpis" class="kpis"></div>
+<table id="tablaMC"></table>
+</section>
+
+<section>
+<h2>9. Resultados y Análisis</h2>
+<p>Esta sección interpreta <strong>los datos producidos por la ejecución</strong>. Las explicaciones cambian cuando se vuelve a ejecutar Montecarlo, por lo que no se presentan conclusiones fijas.</p>
+
+<h3>9.1 Indicadores de la simulación</h3>
+<p class="small">Los siguientes valores corresponden exclusivamente a la última ejecución de Montecarlo.</p>
+<table id="tablaIndicadores"></table>
+
+<h3>9.2 Análisis Probabilístico</h3>
+<div id="analisisProbabilistico" class="analysis-box">
+<strong>Esperando ejecución:</strong> pulsa “Ejecutar Montecarlo” para generar los datos estadísticos de esta sección.
+</div>
+<div id="estadisticaDados" class="analysis-box" style="margin-top:12px">
+<strong>Validación estadística del motor de dados:</strong> ejecuta Montecarlo para calcular la distribución observada de las seis caras a partir de los lanzamientos realmente realizados.
+</div>
+
+<h3>9.3 Probabilidades de combinaciones</h3>
+<p class="small">Se comparan dos referencias: la probabilidad teórica de obtener algunas combinaciones en <strong>un solo lanzamiento</strong> y la frecuencia observada en los turnos simulados. No son medidas idénticas, por lo que la comparación sirve como referencia de comportamiento, no como igualdad exacta.</p>
+<table id="tablaCombinaciones"></table>
+
+<h3>9.4 Observaciones</h3>
+<div id="observaciones" class="observations">
+<div>• Las observaciones aparecerán aquí después de ejecutar Montecarlo y se calcularán a partir de la muestra obtenida.</div>
+</div>
+
+<h3>9.5 Gráficas de los datos ejecutados</h3>
+<p class="small">Las gráficas se regeneran después de cada ejecución y utilizan los resultados reales almacenados en la simulación. Son gráficos vectoriales dentro del HTML, por lo que no se ven como fotografías pegadas y conservan nitidez al ampliar.</p>
+<div class="graphs">
+  <div class="graph">
+    <h3>1. Resultado de las partidas</h3>
+    <div id="g1"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>Jugador 1</span><span class="legend-item"><span class="legend-dot" style="background:#d88918"></span>Jugador 2</span><span class="legend-item"><span class="legend-dot" style="background:#64748b"></span>Empates</span></div>
+    <div id="expG1" class="graph-explain">Se actualiza con las victorias y empates de la ejecución.</div>
+  </div>
+  <div class="graph">
+    <h3>2. Distribución de puntuaciones</h3>
+    <div id="g2"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>Jugador 1</span><span class="legend-item"><span class="legend-dot" style="background:#d88918"></span>Jugador 2</span></div>
+    <div id="expG2" class="graph-explain">Agrupa las puntuaciones finales por intervalos.</div>
+  </div>
+  <div class="graph">
+    <h3>3. Convergencia del porcentaje de victorias</h3>
+    <div id="g3"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>% acumulado de victorias J1</span><span class="legend-item"><span class="legend-dot" style="background:#d88918"></span>Referencia 50%</span></div>
+    <div id="expG3" class="graph-explain">Cómo cambia la proporción acumulada de victorias de J1.</div>
+  </div>
+  <div class="graph">
+    <h3>4. Dispersión: partidas vs promedio</h3>
+    <div id="g4"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>Jugador 1</span><span class="legend-item"><span class="legend-dot" style="background:#d88918"></span>Jugador 2</span></div>
+    <div id="expG4" class="graph-explain">El promedio acumulado de puntuación de J1.</div>
+  </div>
+  <div class="graph">
+    <h3>5. Frecuencia de combinaciones</h3>
+    <div id="g5"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>Frecuencia observada</span></div>
+    <div id="expG5" class="graph-explain">La frecuencia de las combinaciones observadas.</div>
+  </div>
+  <div class="graph">
+    <h3>6. Comparación 1.000 vs 10.000 partidas</h3>
+    <div id="g6"></div>
+    <div class="graph-legend"><span class="legend-item"><span class="legend-dot" style="background:#3f61c9"></span>Jugador 1</span><span class="legend-item"><span class="legend-dot" style="background:#d88918"></span>Jugador 2</span></div>
+    <div id="expG6" class="graph-explain">Compara las estimaciones con dos tamaños de muestra.</div>
+  </div>
+</div>
+
+<div id="conclusionGraficas" class="note" style="margin-top:16px"><strong>Conclusión de las gráficas:</strong> ejecuta Montecarlo para generar una interpretación basada en los resultados.</div>
+</section>
+
+<section>
+<h2>10. Pruebas del programa</h2>
+<p>Las pruebas comprueban las reglas de puntuación y, después de una partida completa, verifican por separado que <strong>cada jugador</strong> haya realizado 13 rondas y que ningún turno supere 3 lanzamientos.</p>
+<div id="pruebas" class="note"></div>
+<div id="pruebasJugadores" class="test-grid"></div>
+</section>
+
+<section>
+<h2>11. Conclusión</h2>
+<div id="conclusionTrabajo" class="note">
+<strong>Conclusión del trabajo:</strong>
+<p>La simulación desarrollada permitió representar una partida de Yahtzee como un experimento aleatorio y analizar su comportamiento mediante el método de Montecarlo. El modelo integra la generación de valores pseudoaleatorios, las reglas del juego, la toma de decisiones mediante una heurística y el registro de los resultados obtenidos en cada partida. La repetición del experimento permite transformar situaciones individuales y variables aleatorias en información estadística que puede ser analizada mediante frecuencias, porcentajes, medidas de tendencia central y medidas de dispersión.</p>
+<p>Los resultados muestran que, aunque cada lanzamiento está condicionado por el azar, al aumentar el número de partidas es posible observar patrones y obtener estimaciones más estables del comportamiento del modelo. La comparación entre diferentes tamaños de muestra permite evidenciar el concepto de convergencia propio del método de Montecarlo: una mayor cantidad de observaciones reduce la influencia relativa de las fluctuaciones propias de una muestra pequeña, sin eliminar la naturaleza aleatoria del experimento.</p>
+<p>En este sentido, el laboratorio demuestra que Montecarlo es una herramienta útil para estudiar sistemas donde intervienen incertidumbre, repetición y toma de decisiones. Los resultados obtenidos corresponden específicamente a las reglas y a la heurística implementadas en el pseudocódigo, por lo que permiten analizar el comportamiento del modelo construido y comprender cómo la simulación computacional puede utilizarse para obtener evidencia estadística a partir de fenómenos aleatorios.</p>
+</div>
+</section>
+
+<footer>Laboratorio de Simulación – Grupo 1 – Octubre de 2026</footer>
+
+<script>
+// ============================================================
+// IMPLEMENTACIÓN JAVASCRIPT
+// Traducción ejecutable del algoritmo desarrollado en el notebook.
+// ============================================================
+
+const CATEGORIAS_SUPERIORES=["Unos","Doses","Treses","Cuatros","Cincos","Seises"];
+const CATEGORIAS_INFERIORES=["Tres iguales","Cuatro iguales","Full house","Escalera pequeña","Escalera grande","Yahtzee","Oportunidad"];
+const CATEGORIAS=[...CATEGORIAS_SUPERIORES,...CATEGORIAS_INFERIORES];
+const ORDEN=Object.fromEntries(CATEGORIAS.map((c,i)=>[c,i]));
+const SEED=20261017;
+
+function rng(){ return Math.random(); }
+function lanzarDado(){ return Math.floor(rng()*6)+1; }
+function lanzarCincoDados(){ return Array.from({length:5},lanzarDado); }
+function relanzarNoConservados(dados, indices){
+  const set=new Set(indices), nuevos=[...dados];
+  for(let i=0;i<5;i++) if(!set.has(i)) nuevos[i]=lanzarDado();
+  return nuevos;
+}
+function conteos(dados){
+  const c={}; dados.forEach(d=>c[d]=(c[d]||0)+1); return c;
+}
+function esEscaleraPequena(d){
+  const s=new Set(d);
+  return [[1,2,3,4],[2,3,4,5],[3,4,5,6]].some(a=>a.every(x=>s.has(x)));
+}
+function esEscaleraGrande(d){
+  const s=[...new Set(d)].sort((a,b)=>a-b).join("");
+  return s==="12345" || s==="23456";
+}
+function esFullHouse(d){
+  return Object.values(conteos(d)).sort((a,b)=>a-b).join(",")==="2,3";
+}
+function esYahtzee(d){ return new Set(d).size===1; }
+function tieneTres(d){ return Math.max(...Object.values(conteos(d)))>=3; }
+function tieneCuatro(d){ return Math.max(...Object.values(conteos(d)))>=4; }
+
+function identificarCombinaciones(d){
+  const r=[];
+  if(tieneTres(d)) r.push("Tres iguales");
+  if(tieneCuatro(d)) r.push("Cuatro iguales");
+  if(esFullHouse(d)) r.push("Full house");
+  if(esEscaleraPequena(d)) r.push("Escalera pequeña");
+  if(esEscaleraGrande(d)) r.push("Escalera grande");
+  if(esYahtzee(d)) r.push("Yahtzee");
+  return r;
+}
+
+function puntuarCategoria(d,categoria){
+  const total=d.reduce((a,b)=>a+b,0), c=conteos(d);
+  if(CATEGORIAS_SUPERIORES.includes(categoria)){
+    const valor=CATEGORIAS_SUPERIORES.indexOf(categoria)+1;
+    return d.filter(x=>x===valor).reduce((a,b)=>a+b,0);
+  }
+  if(categoria==="Tres iguales") return Math.max(...Object.values(c))>=3?total:0;
+  if(categoria==="Cuatro iguales") return Math.max(...Object.values(c))>=4?total:0;
+  if(categoria==="Full house") return esFullHouse(d)?25:0;
+  if(categoria==="Escalera pequeña") return esEscaleraPequena(d)?30:0;
+  if(categoria==="Escalera grande") return esEscaleraGrande(d)?40:0;
+  if(categoria==="Yahtzee") return esYahtzee(d)?50:0;
+  if(categoria==="Oportunidad") return total;
+  return 0;
+}
+
+function crearJugador(nombre){
+  return {nombre, tarjeta:Object.fromEntries(CATEGORIAS.map(c=>[c,null])),
+          bonificacionSuperior:0, yahtzeesAdicionales:0, bonificacionYahtzee:0,
+          historial:[]};
+}
+function categoriasDisponibles(j){ return CATEGORIAS.filter(c=>j.tarjeta[c]===null); }
+function subtotalSuperior(j){ return CATEGORIAS_SUPERIORES.reduce((s,c)=>s+(j.tarjeta[c]||0),0); }
+function subtotalInferior(j){ return CATEGORIAS_INFERIORES.reduce((s,c)=>s+(j.tarjeta[c]||0),0); }
+
+function indicesDelValor(d,v){ return d.map((x,i)=>x===v?i:-1).filter(i=>i>=0); }
+function indicesGrupoMasNumeroso(d){
+  const c=conteos(d), max=Math.max(...Object.values(c));
+  const v=Math.max(...Object.keys(c).filter(x=>c[x]===max).map(Number));
+  return indicesDelValor(d,v);
+}
+function indicesCuatroConsecutivos(d){
+  for(const seq of [[1,2,3,4],[2,3,4,5],[3,4,5,6]]){
+    const presentes=seq.filter(x=>d.includes(x));
+    if(presentes.length===4){
+      const indices=[];
+      for(const v of presentes){
+        const i=d.indexOf(v);
+        if(i>=0 && !indices.includes(i)) indices.push(i);
+      }
+      if(indices.length===4) return indices;
+    }
+  }
+  return null;
+}
+
+function aplicarEstrategiaConservar(d,j){
+  if(esYahtzee(d)) return {indices:[0,1,2,3,4],finalizar:true,razon:"Yahtzee: se conservan los cinco dados."};
+  if(esEscaleraGrande(d) && j.tarjeta["Escalera grande"]===null)
+    return {indices:[0,1,2,3,4],finalizar:true,razon:"Escalera grande disponible: se conservan los cinco dados."};
+  if(esFullHouse(d) && j.tarjeta["Full house"]===null)
+    return {indices:[0,1,2,3,4],finalizar:true,razon:"Full house disponible: se conservan los cinco dados."};
+
+  if(j.tarjeta["Escalera pequeña"]===null || j.tarjeta["Escalera grande"]===null){
+    const ind=indicesCuatroConsecutivos(d);
+    if(ind) return {indices:ind,finalizar:false,razon:"Se conservan cuatro valores consecutivos para buscar una escalera."};
+  }
+  const c=conteos(d), max=Math.max(...Object.values(c));
+  if(max>=4) return {indices:indicesGrupoMasNumeroso(d),finalizar:false,razon:"Se conservan los cuatro dados iguales."};
+  if(max>=3) return {indices:indicesGrupoMasNumeroso(d),finalizar:false,razon:"Se conservan los tres dados iguales."};
+  return {indices:indicesGrupoMasNumeroso(d),finalizar:false,razon:"Se conserva el grupo repetido más numeroso; en empate se prioriza el valor mayor."};
+}
+
+function aplicarJoker(j,d){
+  const valor=d[0], previo=j.tarjeta["Yahtzee"];
+  if(previo===50){j.bonificacionYahtzee+=100;j.yahtzeesAdicionales++;}
+  const sup=CATEGORIAS_SUPERIORES[valor-1];
+  if(j.tarjeta[sup]===null){j.tarjeta[sup]=d.reduce((a,b)=>a+b,0);return {categoria:sup,puntos:j.tarjeta[sup],tipo:"Joker"};}
+  for(const c of ["Full house","Escalera grande","Escalera pequeña","Cuatro iguales","Tres iguales","Oportunidad"]){
+    if(j.tarjeta[c]===null){j.tarjeta[c]=puntuarCategoria(d,c);return {categoria:c,puntos:j.tarjeta[c],tipo:"Joker"};}
+  }
+  const libre=CATEGORIAS_SUPERIORES.find(c=>j.tarjeta[c]===null);
+  if(libre){j.tarjeta[libre]=0;return {categoria:libre,puntos:0,tipo:"Joker"};}
+  return {categoria:null,puntos:null,tipo:"Joker"};
+}
+
+function seleccionarCategoria(j,d){
+  if(esYahtzee(d) && j.tarjeta["Yahtzee"]!==null) return aplicarJoker(j,d);
+  const disponibles=categoriasDisponibles(j);
+  const evals=disponibles.map(c=>({categoria:c,puntos:puntuarCategoria(d,c)}));
+  const mayor=Math.max(...evals.map(x=>x.puntos));
+  let candidatas=evals.filter(x=>x.puntos===mayor).map(x=>x.categoria);
+  if(subtotalSuperior(j)<63){
+    const sup=candidatas.filter(c=>CATEGORIAS_SUPERIORES.includes(c));
+    if(sup.length)candidatas=sup;
+  }
+  const cat=candidatas.sort((a,b)=>ORDEN[a]-ORDEN[b])[0];
+  j.tarjeta[cat]=puntuarCategoria(d,cat);
+  return {categoria:cat,puntos:j.tarjeta[cat],tipo:"Normal"};
+}
+
+function calcularPuntuacionFinal(j){
+  j.bonificacionSuperior=subtotalSuperior(j)>=63?35:0;
+  return subtotalSuperior(j)+j.bonificacionSuperior+subtotalInferior(j)+j.bonificacionYahtzee;
+}
+
+function simularTurno(j,ronda,guardar=true){
+  let dados=lanzarCincoDados();
+  const lanzamientos=[dados.slice()];
+  const observadas=new Set(identificarCombinaciones(dados));
+  let decisiones=[];
+  for(let lanzamiento=1;lanzamiento<3;lanzamiento++){
+    const dec=aplicarEstrategiaConservar(dados,j);
+    decisiones.push({lanzamiento,indices:dec.indices.slice(),razon:dec.razon});
+    if(dec.finalizar) break;
+    dados=relanzarNoConservados(dados,dec.indices);
+    lanzamientos.push(dados.slice());
+    identificarCombinaciones(dados).forEach(x=>observadas.add(x));
+  }
+  const registro=seleccionarCategoria(j,dados);
+  const turno={ronda,jugador:j.nombre,lanzamientos,dadosFinales:dados.slice(),
+               combinacionesObservadas:[...observadas],categoria:registro.categoria,
+               puntos:registro.puntos,tipo:registro.tipo,decisiones};
+  if(guardar)j.historial.push(turno);
+  return turno;
+}
+
+function simularPartida(){
+  const j1=crearJugador("Jugador 1"),j2=crearJugador("Jugador 2");
+  for(let ronda=1;ronda<=13;ronda++){simularTurno(j1,ronda);simularTurno(j2,ronda);}
+  const p1=calcularPuntuacionFinal(j1),p2=calcularPuntuacionFinal(j2);
+  const ganador=p1>p2?"Jugador 1":p2>p1?"Jugador 2":"Empate";
+  return {j1,j2,p1,p2,ganador};
+}
+
+function ejecutarMontecarlo(n){
+  const resultados=[], observadas={}, puntuadas={};
+  const caras={1:0,2:0,3:0,4:0,5:0,6:0};
+  let lanzamientosDados=0;
+  for(let i=1;i<=n;i++){
+    const r=simularPartida();
+    resultados.push({partida:i,j1:r.p1,j2:r.p2,ganador:r.ganador});
+    [...r.j1.historial,...r.j2.historial].forEach(t=>{
+      t.combinacionesObservadas.forEach(c=>observadas[c]=(observadas[c]||0)+1);
+      if(t.categoria)puntuadas[t.categoria]=(puntuadas[t.categoria]||0)+1;
+      // Cada lanzamiento realizado por el motor aporta cinco observaciones de dado.
+      t.lanzamientos.forEach(dados=>dados.forEach(d=>{caras[d]++;lanzamientosDados++;}));
+    });
+  }
+  return {resultados,observadas,puntuadas,caras,lanzamientosDados};
+}
+
+// ---------- INTERFAZ DE PARTIDA PASO A PASO ----------
+let estadoPartida=null;
+
+function nuevaPartida(){
+  estadoPartida={j1:crearJugador("Jugador 1"),j2:crearJugador("Jugador 2"),ronda:1,jugador:1,terminado:false};
+  document.getElementById("bitacora").textContent="Partida iniciada. Pulsa “Ejecutar siguiente paso” para observar cada turno.";
+  document.getElementById("resultadoFinal").textContent="La partida todavía no ha terminado.";
+  renderTablas();
+  actualizarEstado();
+}
+function pasoPartida(){
+  if(!estadoPartida)nuevaPartida();
+  if(estadoPartida.terminado)return;
+  const j=estadoPartida.jugador===1?estadoPartida.j1:estadoPartida.j2;
+  const t=simularTurno(j,estadoPartida.ronda);
+  mostrarTurno(t);
+  if(estadoPartida.jugador===1){estadoPartida.jugador=2;}
+  else{estadoPartida.jugador=1;estadoPartida.ronda++;}
+  if(estadoPartida.ronda>13){
+    estadoPartida.terminado=true;
+    const p1=calcularPuntuacionFinal(estadoPartida.j1),p2=calcularPuntuacionFinal(estadoPartida.j2);
+    const g=p1>p2?"Jugador 1":p2>p1?"Jugador 2":"Empate";
+    document.getElementById("resultadoFinal").innerHTML=`<b>Partida terminada.</b> ${g==="Empate"?"Empate":g+" gana"} — J1: ${p1} puntos | J2: ${p2} puntos.`;
+    document.getElementById("tarjeta1").innerHTML=tablaTarjeta(estadoPartida.j1);
+    document.getElementById("tarjeta2").innerHTML=tablaTarjeta(estadoPartida.j2);
+    actualizarPruebasSiTermina();
+  }
+  renderTablas(); actualizarEstado();
+}
+function partidaCompleta(){
+  nuevaPartida();
+  while(!estadoPartida.terminado)pasoPartida();
+}
+function mostrarTurno(t){
+  const log=document.getElementById("bitacora");
+  const rondaId=`ronda-${t.ronda}`;
+  let bloque=document.getElementById(rondaId);
+  if(!bloque){
+    bloque=document.createElement("div");
+    bloque.id=rondaId;
+    bloque.className="round-block";
+    bloque.innerHTML=`<div class="round-title">🎲 Ronda ${t.ronda} de 13</div><div class="round-body"></div>`;
+    log.prepend(bloque);
+  }
+  const cuerpo=bloque.querySelector(".round-body");
+  const lanzamientos=t.lanzamientos.map((d,i)=>`<div><strong>Lanzamiento ${i+1}:</strong> <span class="dice-inline">[${d.join(", ")}]</span></div>`).join("");
+  const decisiones=t.decisiones.length
+    ? t.decisiones.map(d=>`<div><strong>Decisión:</strong> ${d.razon}</div>`).join("")
+    : `<div><strong>Decisión:</strong> se detuvo porque ya se obtuvo una combinación objetivo.</div>`;
+  const combinaciones=t.combinacionesObservadas.length?t.combinacionesObservadas.join(", "):"ninguna";
+  const linea=document.createElement("div");
+  linea.className="turn-line";
+  linea.innerHTML=`<div class="turn-player">${t.jugador}</div>${lanzamientos}${decisiones}<div><strong>Combinaciones observadas:</strong> ${combinaciones}</div><div><strong>Categoría:</strong> ${t.categoria} <span class="badge">${t.tipo}</span></div><div><strong>Puntuación:</strong> ${t.puntos} puntos</div>`;
+  cuerpo.appendChild(linea);
+
+  const box=t.jugador==="Jugador 1"?"j1Actual":"j2Actual";
+  document.getElementById(box).innerHTML=`<span class="badge">Ronda ${t.ronda}</span><div class="dice">${t.dadosFinales.map(d=>`<div class="die">${d}</div>`).join("")}</div><b>${t.categoria}</b> — ${t.puntos} puntos`;
+}
+function actualizarEstado(){
+  if(!estadoPartida){document.getElementById("estado").textContent="Presiona “Nueva partida” para comenzar.";return;}
+  document.getElementById("estado").textContent=estadoPartida.terminado?"Partida finalizada: se completaron 13 rondas por jugador.":`Ronda ${estadoPartida.ronda}/13 — turno de Jugador ${estadoPartida.jugador}.`;
+}
+function tablaTarjeta(j){
+  let h="<table><tr><th>Categoría</th><th>Puntos</th></tr>";
+  CATEGORIAS.forEach(c=>h+=`<tr><td>${c}</td><td>${j.tarjeta[c]===null?"—":j.tarjeta[c]}</td></tr>`);
+  h+=`<tr><th>Subtotal superior</th><th>${subtotalSuperior(j)}</th></tr><tr><th>Bono superior</th><th>${j.bonificacionSuperior}</th></tr><tr><th>Subtotal inferior</th><th>${subtotalInferior(j)}</th></tr><tr><th>Bono Yahtzee</th><th>${j.bonificacionYahtzee}</th></tr><tr><th>Total</th><th>${calcularPuntuacionFinal(j)}</th></tr></table>`;
+  return h;
+}
+function renderTablas(){
+  if(!estadoPartida)return;
+  document.getElementById("j1Tabla").innerHTML=`<b>Puntos acumulados:</b> ${subtotalSuperior(estadoPartida.j1)+subtotalInferior(estadoPartida.j1)}`;
+  document.getElementById("j2Tabla").innerHTML=`<b>Puntos acumulados:</b> ${subtotalSuperior(estadoPartida.j2)+subtotalInferior(estadoPartida.j2)}`;
+}
+
+// ---------- ESTADÍSTICA ----------
+let ultimoMC=null, comparacionMC=null;
+
+function media(a){return a.reduce((x,y)=>x+y,0)/a.length}
+function mediana(a){const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2}
+function desviacion(a){const m=media(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))}
+function indicadores(res){
+  const n=res.length, p1=res.filter(x=>x.ganador==="Jugador 1").length,p2=res.filter(x=>x.ganador==="Jugador 2").length,e=res.filter(x=>x.ganador==="Empate").length;
+  const a=res.map(x=>x.j1),b=res.map(x=>x.j2);
+  return {n,p1,p2,e,p1pct:p1/n*100,p2pct:p2/n*100,epct:e/n*100,
+          avg1:media(a),avg2:media(b),med1:mediana(a),med2:mediana(b),sd1:desviacion(a),sd2:desviacion(b)};
+}
+function ejecutarMontecarloUI(){
+  const n=Number(document.getElementById("cantidadMC").value);
+  document.getElementById("mcEstado").textContent=`Ejecutando ${n.toLocaleString("es-CO")} partidas...`;
+  setTimeout(()=>{
+    comparacionMC=null;
+    ultimoMC=ejecutarMontecarlo(n);
+    renderMC(ultimoMC);
+    document.getElementById("mcEstado").textContent=`Simulación terminada: ${n.toLocaleString("es-CO")} partidas reales ejecutadas. Las tablas y gráficas se actualizaron con esos datos.`;
+  },30);
+}
+function renderMC(mc){
+  const k=indicadores(mc.resultados);
+
+  // 1. Indicadores principales de la ejecución
+  document.getElementById("kpis").innerHTML=`
+  <div class="kpi"><div>Victorias J1</div><div class="v">${k.p1pct.toFixed(2)}%</div></div>
+  <div class="kpi"><div>Victorias J2</div><div class="v">${k.p2pct.toFixed(2)}%</div></div>
+  <div class="kpi"><div>Empates</div><div class="v">${k.epct.toFixed(2)}%</div></div>
+  <div class="kpi"><div>Promedio J1/J2</div><div class="v">${k.avg1.toFixed(1)} / ${k.avg2.toFixed(1)}</div></div>`;
+
+  document.getElementById("tablaMC").innerHTML=`<tr><th>Indicador</th><th>Jugador 1</th><th>Jugador 2</th><th>Empates</th></tr>
+  <tr><td>Partidas</td><td>${k.n.toLocaleString("es-CO")}</td><td>${k.n.toLocaleString("es-CO")}</td><td>${k.e.toLocaleString("es-CO")}</td></tr>
+  <tr><td>Victorias</td><td>${k.p1.toLocaleString("es-CO")}</td><td>${k.p2.toLocaleString("es-CO")}</td><td>${k.e.toLocaleString("es-CO")}</td></tr>
+  <tr><td>Porcentaje</td><td>${k.p1pct.toFixed(3)}%</td><td>${k.p2pct.toFixed(3)}%</td><td>${k.epct.toFixed(3)}%</td></tr>
+  <tr><td>Promedio</td><td>${k.avg1.toFixed(3)}</td><td>${k.avg2.toFixed(3)}</td><td>—</td></tr>
+  <tr><td>Mediana</td><td>${k.med1.toFixed(3)}</td><td>${k.med2.toFixed(3)}</td><td>—</td></tr>
+  <tr><td>Desviación estándar</td><td>${k.sd1.toFixed(3)}</td><td>${k.sd2.toFixed(3)}</td><td>—</td></tr>`;
+
+  // 2. Estos paneles se actualizan siempre, independientemente de que una gráfica falle.
+  actualizarAnalisisResultados(mc,k);
+  actualizarEstadisticaDados(mc);
+
+  // 3. Gráficas basadas en la misma ejecución.
+  try {
+    dibujarGraficas(mc,k);
+    document.getElementById("mcEstado").dataset.error="";
+  } catch(error) {
+    console.error("Error al dibujar las gráficas:",error);
+    document.getElementById("mcEstado").innerHTML=`<strong>Datos calculados correctamente.</strong> Se actualizaron tablas y análisis, pero ocurrió un problema al dibujar una gráfica: ${error.message}`;
+  }
+}
+
+// Simple SVG plotting helpers. They generate vector graphics from the actual simulation arrays.
+function svgBase(w=560,h=270){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="white"/>`; }
+function svgEnd(){return "</svg>";}
+function barChart(labels,values,title,container){
+  const w=600,h=285,p=52,max=Math.max(...values,1),area=w-p-25,bw=area/values.length*.62;
+  let s=svgBase(w,h)+`<text x="${w/2}" y="21" text-anchor="middle" font-size="14" font-weight="bold">${title}</text>`;
+  s+=`<line x1="${p}" y1="${h-p}" x2="${w-18}" y2="${h-p}" stroke="#334155"/><line x1="${p}" y1="38" x2="${p}" y2="${h-p}" stroke="#334155"/>`;
+  values.forEach((v,i)=>{
+    const slot=area/values.length;
+    const x=p+i*slot+slot*.19;
+    const y=h-p-(v/max)*(h-p-60);
+    const fill=i===1?"#d88918":i===2?"#64748b":"#3f61c9";
+    s+=`<rect x="${x}" y="${y}" width="${bw}" height="${h-p-y}" rx="3" fill="${fill}"/>`;
+    s+=`<text x="${x+bw/2}" y="${h-p+19}" text-anchor="middle" font-size="11">${labels[i]}</text>`;
+    s+=`<text x="${x+bw/2}" y="${Math.max(34,y-6)}" text-anchor="middle" font-size="11" font-weight="bold">${v.toLocaleString("es-CO")}</text>`;
+  });
+  return s+svgEnd();
+}
+function horizontalBarChart(labels,values,title){
+  const w=600,h=300,pL=150,pR=32,pT=42,pB=28;
+  const max=Math.max(...values,1), rowH=(h-pT-pB)/values.length, barH=Math.min(24,rowH*.62);
+  let s=svgBase(w,h)+`<text x="${w/2}" y="22" text-anchor="middle" font-size="14" font-weight="bold">${title}</text>`;
+  // Cuadrícula horizontal y escala de frecuencia para facilitar la lectura.
+  const usable=w-pL-pR;
+  for(let i=0;i<=4;i++){
+    const x=pL+usable*i/4;
+    const val=max*i/4;
+    s+=`<line x1="${x}" y1="${pT-4}" x2="${x}" y2="${h-pB}" stroke="#e2e8f0"/>`;
+    s+=`<text x="${x}" y="${h-8}" text-anchor="middle" font-size="9" fill="#64748b">${Math.round(val).toLocaleString("es-CO")}</text>`;
+  }
+  values.forEach((v,i)=>{
+    const cy=pT+i*rowH+rowH/2, bw=(v/max)*usable;
+    s+=`<text x="${pL-10}" y="${cy+4}" text-anchor="end" font-size="10">${labels[i]}</text>`;
+    s+=`<rect x="${pL}" y="${cy-barH/2}" width="${bw}" height="${barH}" rx="4" fill="#3f61c9"/>`;
+    s+=`<text x="${Math.min(pL+bw+7,w-5)}" y="${cy+4}" text-anchor="start" font-size="10" font-weight="bold">${v.toLocaleString("es-CO")}</text>`;
+  });
+  return s+svgEnd();
+}
+
+function histChart(a,b,container){
+  const all=a.concat(b),min=Math.min(...all),max=Math.max(...all),bins=16,step=(max-min||1)/bins;
+  const ha=Array(bins).fill(0),hb=Array(bins).fill(0);
+  a.forEach(x=>ha[Math.min(bins-1,Math.floor((x-min)/step))]++);
+  b.forEach(x=>hb[Math.min(bins-1,Math.floor((x-min)/step))]++);
+  const maxc=Math.max(...ha,...hb,1),w=560,h=270,p=45,bw=(w-p*2)/bins;
+  let s=svgBase(w,h)+`<text x="${w/2}" y="20" text-anchor="middle" font-size="14" font-weight="bold">Distribución de puntuaciones</text>`;
+  s+=`<line x1="${p}" y1="${h-p}" x2="${w-15}" y2="${h-p}" stroke="#333"/>`;
+  for(let i=0;i<bins;i++){const x=p+i*bw,y=h-p-Math.max(ha[i],hb[i])/maxc*(h-p-55);s+=`<rect x="${x+2}" y="${y}" width="${bw/2-3}" height="${h-p-y}" fill="#3f61c9" opacity=".75"/><rect x="${x+bw/2}" y="${h-p-hb[i]/maxc*(h-p-55)}" width="${bw/2-3}" height="${hb[i]/maxc*(h-p-55)}" fill="#d88918" opacity=".75"/>`;if(i%3===0)s+=`<text x="${x}" y="${h-p+18}" font-size="9">${Math.round(min+i*step)}</text>`}
+  s+=`<text x="${w-100}" y="45" font-size="11">J1</text><rect x="${w-125}" y="36" width="12" height="12" fill="#3f61c9"/><text x="${w-100}" y="62" font-size="11">J2</text><rect x="${w-125}" y="53" width="12" height="12" fill="#d88918"/>`;
+  return s+svgEnd();
+}
+function lineChart(res){
+  const step=Math.max(1,Math.floor(res.length/20)), pts=[];
+  for(let i=step;i<=res.length;i+=step){const q=res.slice(0,i);pts.push([i,q.filter(x=>x.ganador==="Jugador 1").length/i*100]);}
+  if(pts.at(-1)?.[0]!==res.length)pts.push([res.length,res.filter(x=>x.ganador==="Jugador 1").length/res.length*100]);
+  const w=600,h=285,p=48;let s=svgBase(w,h)+`<text x="${w/2}" y="20" text-anchor="middle" font-size="14" font-weight="bold">Convergencia: % victorias Jugador 1</text>`;
+  s+=`<line x1="${p}" y1="${h-p}" x2="${w-15}" y2="${h-p}" stroke="#333"/><line x1="${p}" y1="35" x2="${p}" y2="${h-p}" stroke="#333"/>`;
+  const X=i=>p+(i/res.length)*(w-p-20),Y=v=>h-p-(v/100)*(h-p-55);
+  const path=pts.map((q,i)=>(i?"L":"M")+X(q[0])+","+Y(q[1])).join(" ");
+  s+=`<path d="${path}" fill="none" stroke="#3f61c9" stroke-width="2"/>`;
+  pts.forEach(q=>s+=`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="2.5" fill="#3f61c9"/>`);
+  s+=`<line x1="${p}" y1="${Y(50)}" x2="${w-15}" y2="${Y(50)}" stroke="#d88918" stroke-dasharray="5 4"/><text x="${w-85}" y="${Y(50)-5}" font-size="10">50%</text>`;
+  return s+svgEnd();
+}
+function scatterChart(res){
+  const sizes=[100,500,1000,2000,5000,10000].filter(x=>x<=res.length);
+  const pts1=sizes.map(n=>[n,media(res.slice(0,n).map(x=>x.j1))]);
+  const pts2=sizes.map(n=>[n,media(res.slice(0,n).map(x=>x.j2))]);
+  const allY=pts1.concat(pts2).map(x=>x[1]);
+  const minRaw=Math.min(...allY), maxRaw=Math.max(...allY);
+  const margen=Math.max(2,(maxRaw-minRaw)*0.22);
+  const minY=minRaw-margen,maxY=maxRaw+margen;
+  const w=600,h=285,p=52;
+  let s=svgBase(w,h)+`<text x="${w/2}" y="20" text-anchor="middle" font-size="14" font-weight="bold">Partidas vs puntuación promedio</text>`;
+  const X=x=>p+(x/res.length)*(w-p-25),Y=y=>h-p-(y-minY)/(maxY-minY)*(h-p-55);
+  s+=`<line x1="${p}" y1="${h-p}" x2="${w-15}" y2="${h-p}" stroke="#333"/><line x1="${p}" y1="35" x2="${p}" y2="${h-p}" stroke="#333"/>`;
+  s+=`<text x="${w/2}" y="${h-5}" text-anchor="middle" font-size="10">Número de partidas</text><text x="12" y="${h/2}" transform="rotate(-90 12 ${h/2})" text-anchor="middle" font-size="10">Puntuación promedio</text>`;
+  // Trayectorias acumuladas: conectan los puntos de cada jugador para visualizar la evolución.
+  const path1=pts1.map((q,i)=>(i?'L':'M')+X(q[0])+','+Y(q[1])).join(' ');
+  const path2=pts2.map((q,i)=>(i?'L':'M')+X(q[0])+','+Y(q[1])).join(' ');
+  s+=`<path d="${path1}" fill="none" stroke="#3f61c9" stroke-width="2"/><path d="${path2}" fill="none" stroke="#d88918" stroke-width="2"/>`;
+  pts1.forEach(q=>{
+    const x=X(q[0]),y=Y(q[1]);
+    s+=`<circle cx="${x}" cy="${y}" r="5" fill="#3f61c9"/><text x="${x}" y="${y-9}" text-anchor="middle" font-size="9" font-weight="bold" fill="#263f8f">${q[1].toFixed(1)}</text>`;
+  });
+  pts2.forEach(q=>{
+    const x=X(q[0]),y=Y(q[1]);
+    s+=`<circle cx="${x}" cy="${y}" r="5" fill="#d88918"/><text x="${x}" y="${y+16}" text-anchor="middle" font-size="9" font-weight="bold" fill="#9a5a00">${q[1].toFixed(1)}</text>`;
+  });
+  return s+svgEnd();
+}
+
+function actualizarEstadisticaDados(mc){
+  const total=mc.lanzamientosDados||0;
+  const esperado=total/6;
+  const filas=Object.keys(mc.caras||{}).map(c=>{
+    const obs=mc.caras[c]||0, pct=total?obs/total*100:0, dif=pct-(100/6);
+    return `<tr><td> ${c}</td><td>${obs.toLocaleString("es-CO")}</td><td>${pct.toFixed(2)}%</td><td>16,67%</td><td>${(dif>=0?"+":"")+dif.toFixed(2)} pp</td></tr>`;
+  }).join("");
+  const valores=Object.values(mc.caras||{});
+  const minObs=valores.length?Math.min(...valores):0,maxObs=valores.length?Math.max(...valores):0;
+  const rango=maxObs-minObs;
+  document.getElementById("estadisticaDados").innerHTML=
+    `<strong>Validación estadística del motor de dados:</strong> la ejecución produjo ${total.toLocaleString("es-CO")} observaciones individuales de dado. `+
+    `Bajo una distribución uniforme discreta, cada cara tiene una referencia teórica de 16,67%. `+
+    `La tabla permite comparar directamente la frecuencia observada con esa referencia; la diferencia se expresa en puntos porcentuales. `+
+    `La cara más frecuente registró ${maxObs.toLocaleString("es-CO")} apariciones y la menos frecuente ${minObs.toLocaleString("es-CO")}; el rango entre ambas fue de ${rango.toLocaleString("es-CO")} observaciones. `+
+    `<table style="margin-top:10px"><tr><th>Cara</th><th>Frecuencia</th><th>Frecuencia relativa</th><th>Referencia teórica</th><th>Diferencia</th></tr>${filas}</table>`+
+    `<span class="small">Referencia esperada de conteo por cara: ${esperado.toLocaleString("es-CO",{maximumFractionDigits:1})} observaciones sobre el total simulado. Las diferencias son normales en una muestra aleatoria y no implican sesgo por sí solas.</span>`;
+}
+
+function actualizarAnalisisResultados(mc,k){
+  const lider = k.p1 > k.p2 ? "Jugador 1" : k.p2 > k.p1 ? "Jugador 2" : "Empate";
+  const difProm = Math.abs(k.avg1-k.avg2);
+  const difWin = Math.abs(k.p1pct-k.p2pct);
+  const mejorProm = k.avg1 > k.avg2 ? "Jugador 1" : k.avg2 > k.avg1 ? "Jugador 2" : "ambos jugadores";
+  const menorVariacion = k.sd1 < k.sd2 ? "Jugador 1" : k.sd2 < k.sd1 ? "Jugador 2" : "ambos jugadores";
+
+  const equilibrio = difWin < 1 ? "muy equilibrada" : difWin < 3 ? "con una ventaja moderada" : "con una diferencia marcada";
+  const estabilidad = difProm < 2 ? "Los promedios son cercanos, por lo que el desempeño global resulta similar." :
+                      `${mejorProm} obtuvo una puntuación media superior por ${difProm.toFixed(2)} puntos.`;
+
+  // 9.2 Análisis probabilístico: conecta la distribución uniforme con los resultados simulados.
+  const diferenciaProm= Math.abs(k.avg1-k.avg2);
+  document.getElementById("analisisProbabilistico").innerHTML =
+    `<strong>Análisis probabilístico de la ejecución:</strong> se analizaron ${k.n.toLocaleString("es-CO")} partidas completas, equivalentes a ${ (k.n*26).toLocaleString("es-CO")} turnos de jugador. `+
+    `El motor genera cada dado mediante una distribución uniforme discreta, de modo que cada cara tiene una probabilidad teórica de 1/6 = 16,67%. `+
+    `${lider==="Empate"?"Los jugadores terminaron con el mismo número de victorias.":lider+" obtuvo el mayor porcentaje de victorias"} `+
+    `(${lider==="Empate"?k.p1pct.toFixed(2):lider==="Jugador 1"?k.p1pct.toFixed(2):k.p2pct.toFixed(2)}%), con una diferencia de ${difWin.toFixed(2)} puntos porcentuales respecto al otro jugador. `+
+    `${estabilidad} La diferencia entre las puntuaciones medias fue de ${diferenciaProm.toFixed(2)} puntos, mientras que las desviaciones estándar fueron ${k.sd1.toFixed(2)} para J1 y ${k.sd2.toFixed(2)} para J2. `+
+    `La interpretación debe hacerse sobre esta estrategia concreta: la heurística de conservación y la selección de categorías condicionan las puntuaciones y las combinaciones observadas. `+
+    `Por tanto, Montecarlo permite estimar el comportamiento del algoritmo bajo repetición; no demuestra que la estrategia sea óptima ni elimina la variabilidad aleatoria.`;
+
+  // 9.3 Probabilidades de combinaciones.
+  const teoricas = {
+    "Tres iguales":"21,30%",
+    "Cuatro iguales":"2,01%",
+    "Full house":"3,86%",
+    "Escalera pequeña":"15,43%",
+    "Escalera grande":"3,09%",
+    "Yahtzee":"0,077%"
+  };
+  const descripciones = {
+    "Tres iguales":"Al menos tres dados con el mismo valor.",
+    "Cuatro iguales":"Cuatro dados con el mismo valor.",
+    "Full house":"Tres dados de un valor y dos de otro.",
+    "Escalera pequeña":"Cuatro valores consecutivos presentes.",
+    "Escalera grande":"Cinco valores consecutivos.",
+    "Yahtzee":"Los cinco dados con el mismo valor."
+  };
+  const totalTurnos = k.n*26;
+  const filas = Object.keys(teoricas).map(c=>{
+    const obs = mc.observadas[c] || 0;
+    const pct = totalTurnos ? obs/totalTurnos*100 : 0;
+    return `<tr><td><strong>${c}</strong><br><span class="small">${descripciones[c]}</span></td><td>${teoricas[c]}</td><td>${obs.toLocaleString("es-CO")}</td><td>${pct.toFixed(2)}%</td></tr>`;
+  }).join("");
+  document.getElementById("tablaCombinaciones").innerHTML =
+    `<tr><th>Combinación</th><th>Referencia teórica*</th><th>Veces observada</th><th>Frecuencia en turnos</th></tr>${filas}`+
+    `<tr><td colspan="4" class="small">* La referencia teórica corresponde a un lanzamiento de cinco dados y a la definición utilizada por el detector del programa: “Tres iguales” incluye 3 o más iguales, “Cuatro iguales” incluye 4 o más, y una misma tirada puede contribuir a varias categorías. La frecuencia simulada se obtiene sobre turnos de hasta tres lanzamientos y bajo una heurística de conservación; por ello no se espera igualdad exacta entre ambos valores.</td></tr>`;
+
+  // 9.4 Observaciones dinámicas.
+  const topCats = Object.entries(mc.observadas).sort((a,b)=>b[1]-a[1]).slice(0,2);
+  const obs = [
+    `La muestra contiene ${k.n.toLocaleString("es-CO")} partidas completas, es decir, ${totalTurnos.toLocaleString("es-CO")} turnos de jugador. Cada partida conserva la estructura de 13 rondas por jugador y hasta tres lanzamientos por turno.`,
+    `${lider==="Empate"?"Ambos jugadores terminaron con el mismo número de victorias.":lider+" consiguió la mayor cantidad de victorias."} La diferencia fue de ${difWin.toFixed(2)} puntos porcentuales; esta diferencia describe la muestra simulada y no constituye, por sí sola, evidencia de superioridad estadística permanente.`,
+    `La puntuación media fue ${k.avg1.toFixed(2)} para J1 y ${k.avg2.toFixed(2)} para J2. ${mejorProm==="ambos jugadores"?"Los promedios coinciden.":mejorProm+" obtuvo el promedio más alto."} La diferencia de medias fue de ${Math.abs(k.avg1-k.avg2).toFixed(2)} puntos.`,
+    `La desviación estándar fue ${k.sd1.toFixed(2)} en J1 y ${k.sd2.toFixed(2)} en J2. ${menorVariacion==="ambos jugadores"?"Ambos jugadores presentan una dispersión similar.":menorVariacion+" presenta menor dispersión de puntuaciones alrededor de su promedio."} Esta medida complementa al promedio porque cuantifica la variabilidad de los resultados.`,
+    topCats.length ? `Las combinaciones con mayor frecuencia observada fueron ${topCats.map(x=>`${x[0]} (${x[1].toLocaleString("es-CO")})`).join(" y ")}. Estas frecuencias están condicionadas por los relanzamientos y la heurística de conservación implementada.` : "No se registraron combinaciones especiales en la muestra."
+  ];
+  document.getElementById("observaciones").innerHTML = obs.map(x=>`<div>• ${x}</div>`).join("");
+
+  // Conclusión académica general del laboratorio. Se mantiene independiente de una ejecución específica.
+  document.getElementById("conclusionTrabajo").innerHTML =
+    `<strong>Conclusión del trabajo:</strong>`+
+    `<p>La simulación desarrollada permitió representar una partida de Yahtzee como un experimento aleatorio y analizar su comportamiento mediante el método de Montecarlo. El modelo integra la generación de valores pseudoaleatorios, las reglas del juego, la toma de decisiones mediante una heurística y el registro de los resultados obtenidos en cada partida. La repetición del experimento permite transformar situaciones individuales y variables aleatorias en información estadística que puede ser analizada mediante frecuencias, porcentajes, medidas de tendencia central y medidas de dispersión.</p>`+
+    `<p>Los resultados muestran que, aunque cada lanzamiento está condicionado por el azar, al aumentar el número de partidas es posible observar patrones y obtener estimaciones más estables del comportamiento del modelo. La comparación entre diferentes tamaños de muestra permite evidenciar el concepto de convergencia propio del método de Montecarlo: una mayor cantidad de observaciones reduce la influencia relativa de las fluctuaciones propias de una muestra pequeña, sin eliminar la naturaleza aleatoria del experimento.</p>`+
+    `<p>En este sentido, el laboratorio demuestra que Montecarlo es una herramienta útil para estudiar sistemas donde intervienen incertidumbre, repetición y toma de decisiones. Los resultados obtenidos corresponden específicamente a las reglas y a la heurística implementadas en el pseudocódigo, por lo que permiten analizar el comportamiento del modelo construido y comprender cómo la simulación computacional puede utilizarse para obtener evidencia estadística a partir de fenómenos aleatorios.</p>`;
+}
+
+function dibujarGraficas(mc,k){
+  document.getElementById("g1").innerHTML=barChart(["Jugador 1","Jugador 2","Empate"],[k.p1,k.p2,k.e],"Cantidad de partidas");
+  document.getElementById("g2").innerHTML=histChart(mc.resultados.map(x=>x.j1),mc.resultados.map(x=>x.j2),"g2");
+  document.getElementById("g3").innerHTML=lineChart(mc.resultados);
+  document.getElementById("g4").innerHTML=scatterChart(mc.resultados);
+  const cats=["Tres iguales","Cuatro iguales","Full house","Escalera pequeña","Escalera grande","Yahtzee"];
+  document.getElementById("g5").innerHTML=horizontalBarChart(cats,cats.map(c=>mc.observadas[c]||0),"Frecuencia observada de combinaciones");
+  if(comparacionMC){
+    const a=indicadores(comparacionMC.a.resultados),b=indicadores(comparacionMC.b.resultados);
+    document.getElementById("g6").innerHTML=barChart(
+      ["J1 1k","J1 10k","J2 1k","J2 10k"],
+      [a.p1pct,b.p1pct,a.p2pct,b.p2pct],
+      "Porcentaje de victorias"
+    );
+  } else {
+    document.getElementById("g6").innerHTML=`<div style="height:270px;display:flex;align-items:center;justify-content:center;color:#65708a;font-size:16px">Ejecuta “Comparar 1.000 vs 10.000” para generar esta gráfica.</div>`;
+  }
+
+  const lider=k.p1>k.p2?"Jugador 1":k.p2>k.p1?"Jugador 2":"ningún jugador";
+  const diferencia=Math.abs(k.p1pct-k.p2pct);
+  document.getElementById("conclusionGraficas").innerHTML=
+    `<strong>Conclusión de las gráficas:</strong> En ${k.n.toLocaleString("es-CO")} partidas, ${lider==="ningún jugador"?"los dos jugadores obtuvieron el mismo porcentaje de victorias.":lider+" obtuvo el mayor porcentaje de victorias ("+(lider==="Jugador 1"?k.p1pct.toFixed(2):k.p2pct.toFixed(2))+"%)."} `+
+    `La diferencia entre los porcentajes de victoria es de ${diferencia.toFixed(2)} puntos porcentuales. `+
+    `La distribución de puntuaciones permite comparar el comportamiento de ambos jugadores y la gráfica de convergencia muestra cómo la estimación se estabiliza a medida que aumenta el número de partidas. `+
+    `Los valores corresponden a la ejecución realizada en esta página.`;
+
+  const difProm = Math.abs(k.avg1-k.avg2);
+  const liderScore = k.avg1 > k.avg2 ? "Jugador 1" : k.avg2 > k.avg1 ? "Jugador 2" : "ambos";
+  const concG1 = lider==="ningún jugador"
+    ? "Los dos jugadores obtuvieron el mismo porcentaje de victorias; no se observa ventaja en frecuencia de triunfos."
+    : `${lider} concentra más victorias. La diferencia es de ${diferencia.toFixed(2)} puntos porcentuales, por lo que la ventaja ${diferencia<1?"es pequeña":diferencia<3?"es moderada":"es marcada"} en esta ejecución.`;
+  document.getElementById("expG1").innerHTML = `Compara victorias y empates en la muestra. <strong>Interpretación:</strong> ${concG1} La lectura debe considerar también los empates: la diferencia de porcentajes se calcula sobre el mismo número de partidas, por lo que permite comparar directamente el desempeño relativo de ambos jugadores.`;
+
+  document.getElementById("expG2").innerHTML =
+    `Distribuye las puntuaciones finales obtenidas por ambos jugadores. <strong>Interpretación:</strong> J1 obtuvo un promedio de ${k.avg1.toFixed(1)} y J2 de ${k.avg2.toFixed(1)} puntos, con una diferencia de ${Math.abs(k.avg1-k.avg2).toFixed(2)}. El solapamiento de las barras indica que ambos pueden alcanzar rangos de puntuación similares; la amplitud de la distribución permite apreciar la variabilidad, que se cuantifica con las desviaciones estándar de ${k.sd1.toFixed(1)} y ${k.sd2.toFixed(1)}.`;
+
+  const dist50 = Math.abs(k.p1pct-50);
+  document.getElementById("expG3").innerHTML =
+    `Muestra la evolución acumulada del porcentaje de victorias de J1. <strong>Interpretación:</strong> termina en ${k.p1pct.toFixed(2)}%, a ${dist50.toFixed(2)} puntos porcentuales de la referencia 50%. La trayectoria permite observar las fluctuaciones de las primeras partidas y la tendencia a estabilizarse cuando aumenta N; una convergencia cercana a 50% es consistente con un enfrentamiento equilibrado bajo esta heurística, pero no implica que cada partida individual sea equiprobable en su resultado.`;
+
+  document.getElementById("expG4").innerHTML =
+    `Relaciona el tamaño acumulado de la muestra con el promedio de puntuación. <strong>Interpretación:</strong> la trayectoria muestra cómo el promedio cambia al incorporar más partidas. J1 termina en ${k.avg1.toFixed(1)} y J2 en ${k.avg2.toFixed(1)} puntos. Cuando los puntos consecutivos se acercan y las variaciones verticales disminuyen, la media acumulada presenta mayor estabilidad; por eso esta gráfica es útil para evaluar el efecto del tamaño de muestra sobre la estimación.`;
+
+  const top = Object.entries(mc.observadas).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById("expG5").innerHTML =
+    top ? `Ordena las combinaciones por frecuencia observada. <strong>Interpretación:</strong> ${top[0]} fue la combinación registrada con mayor frecuencia (${top[1].toLocaleString("es-CO")} apariciones). Estas frecuencias se contabilizan cuando una combinación aparece durante alguno de los lanzamientos de un turno; por tanto, reflejan tanto el azar como la heurística y los relanzamientos del algoritmo y no deben confundirse con una probabilidad teórica de un único lanzamiento.` :
+          `Ordena las combinaciones observadas. <strong>Interpretación:</strong> no se registraron combinaciones especiales en esta ejecución.`;
+
+  if(comparacionMC){
+    const a2=indicadores(comparacionMC.a.resultados), b2=indicadores(comparacionMC.b.resultados);
+    const estable=Math.abs(a2.p1pct-b2.p1pct)<1 && Math.abs(a2.p2pct-b2.p2pct)<1;
+    const d1=Math.abs(a2.p1pct-b2.p1pct), d2=Math.abs(a2.p2pct-b2.p2pct);
+    document.getElementById("expG6").innerHTML =
+      `Compara las estimaciones obtenidas con 1.000 y 10.000 partidas. <strong>Interpretación:</strong> J1 pasó de ${a2.p1pct.toFixed(2)}% a ${b2.p1pct.toFixed(2)}%, un cambio de ${d1.toFixed(2)} puntos porcentuales; J2 pasó de ${a2.p2pct.toFixed(2)}% a ${b2.p2pct.toFixed(2)}%, un cambio de ${d2.toFixed(2)} puntos. ${estable?"Ambos cambios son menores a 1 punto porcentual, lo que sugiere una estimación estable entre ambas muestras.":"Las diferencias aún son apreciables, por lo que esta comparación muestra que el tamaño de la muestra puede modificar la estimación observada."} La comparación no elimina el azar: evalúa la estabilidad de las estimaciones al incrementar N.`;
+  } else {
+    document.getElementById("expG6").innerHTML =
+      `Comparación entre tamaños de muestra. <strong>Interpretación:</strong> pulsa “Comparar 1.000 vs 10.000” para generar los datos de esta gráfica.`;
+  }
+
+  actualizarAnalisisResultados(mc,k);
+}
+function compararMC(){
+  document.getElementById("mcEstado").textContent="Ejecutando comparación 1.000 vs 10.000...";
+  setTimeout(()=>{
+    comparacionMC={a:ejecutarMontecarlo(1000),b:ejecutarMontecarlo(10000)};
+    ultimoMC=comparacionMC.b; renderMC(ultimoMC);
+    document.getElementById("mcEstado").textContent="Comparación completada: los dos experimentos fueron ejecutados y las gráficas usan sus datos.";
+  },30);
+}
+
+// ---------- PRUEBAS ----------
+function ejecutarPruebas(){
+  const casos=[
+    [[1,1,3,4,6],"Unos",2],
+    [[3,3,3,2,6],"Tres iguales",17],
+    [[2,2,2,5,5],"Full house",25],
+    [[1,2,3,4,6],"Escalera pequeña",30],
+    [[2,3,4,5,6],"Escalera grande",40],
+    [[4,4,4,4,4],"Yahtzee",50]
+  ];
+
+  let ok=0,txt="<strong>Pruebas de puntuación:</strong><br>";
+  casos.forEach(c=>{
+    const v=puntuarCategoria(c[0],c[1]);
+    if(v===c[2]){
+      ok++;
+      txt+=`<span class="test-pass">✓ ${c[1]}: ${v} puntos</span><br>`;
+    }else{
+      txt+=`<span class="test-fail">✗ ${c[1]}: esperado ${c[2]}, obtenido ${v}</span><br>`;
+    }
+  });
+
+  const j=crearJugador("Prueba 63");
+  ["Unos","Doses","Treses","Cuatros","Cincos"].forEach(c=>j.tarjeta[c]=10);
+  j.tarjeta["Seises"]=13;
+  calcularPuntuacionFinal(j);
+
+  txt+=`<br><strong>Prueba de bonificación superior:</strong> subtotal = ${subtotalSuperior(j)} → bono esperado = 35 → obtenido = ${j.bonificacionSuperior}.`;
+  txt+=`<br><br><strong>Resultado:</strong> ${ok}/${casos.length} pruebas de puntuación superadas.`;
+
+  document.getElementById("pruebas").innerHTML=txt;
+
+  // Si existe una partida ejecutada, verificamos por separado a cada jugador.
+  if(estadoPartida && estadoPartida.terminado){
+    renderPruebasJugadores(estadoPartida.j1);
+    renderPruebasJugadores(estadoPartida.j2);
+  }
+}
+
+function renderPruebasJugadores(j){
+  const cont=document.getElementById("pruebasJugadores");
+  const turnos=j.historial || [];
+  const maxTres=turnos.every(t=>t.lanzamientos.length<=3);
+  const trece=turnos.length===13;
+  const categorias=turnos.map(t=>t.categoria).filter(Boolean);
+  const sinDuplicados=new Set(categorias).size===categorias.length;
+  const total=calcularPuntuacionFinal(j);
+
+  const filas=turnos.map(t=>`
+    <tr>
+      <td>${t.ronda}</td>
+      <td>${t.lanzamientos.length}</td>
+      <td>${t.lanzamientos.map((d,i)=>`T${i+1}: [${d.join(",")}]`).join("<br>")}</td>
+      <td>${t.categoria}</td>
+      <td>${t.puntos}</td>
+      <td>${t.tipo}</td>
+    </tr>`).join("");
+
+  const estado1=trece?`<span class="test-pass">✓ 13 rondas completadas</span>`:`<span class="test-fail">✗ Se esperaban 13 rondas</span>`;
+  const estado2=maxTres?`<span class="test-pass">✓ Ningún turno supera 3 lanzamientos</span>`:`<span class="test-fail">✗ Hay un turno con más de 3 lanzamientos</span>`;
+  const estado3=sinDuplicados?`<span class="test-pass">✓ Categorías sin repetir</span>`:`<span class="test-fail">✗ Hay categorías repetidas</span>`;
+
+  const card=document.createElement("div");
+  card.className="test-card";
+  card.innerHTML=`
+    <h3>🎲 ${j.nombre}</h3>
+    <p>${estado1}<br>${estado2}<br>${estado3}</p>
+    <p><strong>Puntuación final:</strong> ${total} puntos</p>
+    <table>
+      <tr><th>Ronda</th><th>Tiradas</th><th>Datos de los lanzamientos</th><th>Categoría</th><th>Puntos</th><th>Tipo</th></tr>
+      ${filas}
+    </table>`;
+  cont.appendChild(card);
+}
+
+function actualizarPruebasSiTermina(){
+  if(estadoPartida && estadoPartida.terminado){
+    const cont=document.getElementById("pruebasJugadores");
+    cont.innerHTML="";
+    renderPruebasJugadores(estadoPartida.j1);
+    renderPruebasJugadores(estadoPartida.j2);
+  }
+}
+
+// Mostrar el código principal en la página.
+const bloquesCodigo = [
+`// ============================================================
+// 1. GENERACIÓN DE DADOS Y DETECCIÓN DE COMBINACIONES
+// ============================================================
+
+function lanzarDado(){
+    // Genera un número entero aleatorio entre 1 y 6.
+    return Math.floor(Math.random() * 6) + 1;
+}
+
+function lanzarCincoDados(){
+    // El algoritmo comienza cada turno con cinco dados.
+    return Array.from({length: 5}, lanzarDado);
+}
+
+function relanzarNoConservados(dados, indicesConservados){
+    // Solo se vuelven a lanzar los dados que NO fueron conservados.
+    const conservados = new Set(indicesConservados);
+    const nuevosDados = [...dados];
+
+    for(let i = 0; i < 5; i++){
+        if(!conservados.has(i)){
+            nuevosDados[i] = lanzarDado();
+        }
+    }
+
+    return nuevosDados;
+}
+
+function identificarCombinaciones(dados){
+    // Evalúa las combinaciones posibles del lanzamiento.
+    const combinaciones = [];
+
+    if(tieneTres(dados)) combinaciones.push("Tres iguales");
+    if(tieneCuatro(dados)) combinaciones.push("Cuatro iguales");
+    if(esFullHouse(dados)) combinaciones.push("Full house");
+    if(esEscaleraPequena(dados)) combinaciones.push("Escalera pequeña");
+    if(esEscaleraGrande(dados)) combinaciones.push("Escalera grande");
+    if(esYahtzee(dados)) combinaciones.push("Yahtzee");
+
+    return combinaciones;
+}`,
+
+`// ============================================================
+// 2. JUGADOR, CATEGORÍAS Y PUNTUACIÓN
+// ============================================================
+
+function crearJugador(nombre){
+    // Cada jugador inicia con las 13 categorías vacías.
+    return {
+        nombre: nombre,
+        tarjeta: Object.fromEntries(
+            CATEGORIAS.map(categoria => [categoria, null])
+        ),
+        bonificacionSuperior: 0,
+        yahtzeesAdicionales: 0,
+        bonificacionYahtzee: 0,
+        historial: []
+    };
+}
+
+function puntuarCategoria(dados, categoria){
+    // Calcula los puntos según la categoría seleccionada.
+    const total = dados.reduce((a,b) => a + b, 0);
+    const conteo = conteos(dados);
+
+    if(CATEGORIAS_SUPERIORES.includes(categoria)){
+        const valor = CATEGORIAS_SUPERIORES.indexOf(categoria) + 1;
+        return dados
+            .filter(dado => dado === valor)
+            .reduce((a,b) => a + b, 0);
+    }
+
+    if(categoria === "Tres iguales")
+        return Math.max(...Object.values(conteo)) >= 3 ? total : 0;
+
+    if(categoria === "Cuatro iguales")
+        return Math.max(...Object.values(conteo)) >= 4 ? total : 0;
+
+    if(categoria === "Full house")
+        return esFullHouse(dados) ? 25 : 0;
+
+    if(categoria === "Escalera pequeña")
+        return esEscaleraPequena(dados) ? 30 : 0;
+
+    if(categoria === "Escalera grande")
+        return esEscaleraGrande(dados) ? 40 : 0;
+
+    if(categoria === "Yahtzee")
+        return esYahtzee(dados) ? 50 : 0;
+
+    if(categoria === "Oportunidad")
+        return total;
+
+    return 0;
+}
+
+function calcularPuntuacionFinal(jugador){
+    // Bono superior: 35 puntos si el subtotal superior alcanza 63.
+    jugador.bonificacionSuperior =
+        subtotalSuperior(jugador) >= 63 ? 35 : 0;
+
+    return subtotalSuperior(jugador)
+         + jugador.bonificacionSuperior
+         + subtotalInferior(jugador)
+         + jugador.bonificacionYahtzee;
+}`,
+
+`// ============================================================
+// 3. TURNO Y PARTIDA COMPLETA
+// ============================================================
+
+function simularTurno(jugador, ronda){
+    // 1. Primer lanzamiento: cinco dados.
+    let dados = lanzarCincoDados();
+    const lanzamientos = [dados.slice()];
+
+    // 2. Máximo dos relanzamientos adicionales.
+    const decisiones = [];
+
+    let lanzamientosRealizados = 1;
+
+    while(lanzamientosRealizados < 3){
+        // Aplicar_Estrategia_Conservar(dados)
+        const decision = aplicarEstrategiaConservar(
+            dados,
+            jugador
+        );
+
+        decisiones.push(decision);
+
+        // Si la combinación ya es adecuada, se puede terminar.
+        if(decision.finalizar){
+            break;
+        }
+
+        // Volver_A_Lanzar_No_Conservados(dados)
+        dados = relanzarNoConservados(
+            dados,
+            decision.indices
+        );
+
+        lanzamientos.push(dados.slice());
+        lanzamientosRealizados++;
+    }
+
+    // 3. Evaluar y registrar la categoría.
+    const registro = seleccionarCategoria(
+        jugador,
+        dados
+    );
+
+    const turno = {
+        ronda: ronda,
+        jugador: jugador.nombre,
+        lanzamientos: lanzamientos,
+        dadosFinales: dados.slice(),
+        combinacionesObservadas:
+            identificarCombinaciones(dados),
+        categoria: registro.categoria,
+        puntos: registro.puntos,
+        tipo: registro.tipo,
+        decisiones: decisiones
+    };
+
+    jugador.historial.push(turno);
+
+    return turno;
+}
+
+function simularPartida(){
+    // Crear los dos jugadores con tarjetas vacías.
+    const jugador1 = crearJugador("Jugador 1");
+    const jugador2 = crearJugador("Jugador 2");
+
+    // El algoritmo establece exactamente 13 rondas.
+    for(let ronda = 1; ronda <= 13; ronda++){
+        simularTurno(jugador1, ronda);
+        simularTurno(jugador2, ronda);
+    }
+
+    const puntuacion1 = calcularPuntuacionFinal(jugador1);
+    const puntuacion2 = calcularPuntuacionFinal(jugador2);
+
+    let ganador = "Empate";
+
+    if(puntuacion1 > puntuacion2) ganador = "Jugador 1";
+    if(puntuacion2 > puntuacion1) ganador = "Jugador 2";
+
+    return {
+        jugador1,
+        jugador2,
+        puntuacionJ1: puntuacion1,
+        puntuacionJ2: puntuacion2,
+        ganador
+    };
+}`,
+
+`// ============================================================
+// 4. MÉTODO DE MONTECARLO
+// ============================================================
+
+function ejecutarMontecarlo(numeroPartidas){
+    const resultados = [];
+    const observadas = {};
+
+    // Repetimos la partida completa muchas veces.
+    for(let i = 1; i <= numeroPartidas; i++){
+
+        // Cada repetición es un experimento aleatorio.
+        const partida = simularPartida();
+
+        resultados.push({
+            partida: i,
+            puntuacionJ1: partida.puntuacionJ1,
+            puntuacionJ2: partida.puntuacionJ2,
+            ganador: partida.ganador
+        });
+
+        // Acumulamos las combinaciones observadas.
+        [...partida.jugador1.historial,
+         ...partida.jugador2.historial].forEach(turno => {
+
+            turno.combinacionesObservadas.forEach(combinacion => {
+                observadas[combinacion] =
+                    (observadas[combinacion] || 0) + 1;
+            });
+        });
+    }
+
+    // Estos resultados son la base de las tablas y gráficas.
+    return {
+        resultados: resultados,
+        observadas: observadas
+    };
+}`];
+
+function escaparCodigo(codigo){
+    return codigo
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+}
+
+function resaltarCodigo(codigo){
+    let s = escaparCodigo(codigo);
+    s = s.replace(/(\/\/.*)/g,'<span class="com">$1</span>');
+    s = s.replace(/(".*?"|'.*?'|`[\s\S]*?`)/g,'<span class="str">$1</span>');
+    s = s.replace(/\b(const|let|function|return|if|else|for|while|new|true|false|null)\b/g,'<span class="kw">$1</span>');
+    s = s.replace(/\b(lanzarDado|lanzarCincoDados|relanzarNoConservados|identificarCombinaciones|crearJugador|puntuarCategoria|calcularPuntuacionFinal|simularTurno|simularPartida|ejecutarMontecarlo|aplicarEstrategiaConservar|seleccionarCategoria)\b/g,'<span class="fn">$1</span>');
+    s = s.replace(/\b\d+(\.\d+)?\b/g,'<span class="num">$&</span>');
+    return s;
+}
+
+function mostrarBloqueCodigo(indice, boton){
+    document.querySelectorAll(".code-tab").forEach(b => b.classList.remove("active"));
+    if(boton) boton.classList.add("active");
+    document.querySelector("#codigoVisible pre").innerHTML =
+        resaltarCodigo(bloquesCodigo[indice]);
+}
+document.querySelector("#codigoVisible pre").innerHTML=resaltarCodigo(bloquesCodigo[0]);
+ejecutarPruebas();
+document.getElementById("pruebasJugadores").innerHTML =
+  `<div class="test-card"><h3>Jugador 1</h3><p>Ejecuta una partida completa para visualizar aquí las 13 rondas y las pruebas de ejecución.</p></div>
+   <div class="test-card"><h3>Jugador 2</h3><p>Ejecuta una partida completa para visualizar aquí las 13 rondas y las pruebas de ejecución.</p></div>`;
+</script>
+</body>
+</html>
